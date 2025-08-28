@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<!--*****************************************************
+
+GEOG 414: Programming for Geospatial Data Science II
+Unit 2 Assignment: Symbol Map
+
+This part of your Unit 2 assignment requires that you develop a symbol-based map using Leaflet, a popular front-end JavaScript Web mapping framework.  You will use GeoJSON source data containing point geometry and attribute data to create an interactive map.
+
+Add your work directly to this document, and once complete, submit to the course website for grading.
+
+*****************************************************-->
+
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<!-- TO DO: Add a map title -->
+	 <title>Interactive Salmon Recovery Portal (Washington)</title>
+
+	<!-- TO DO: Import Bootstrap (first), Leaflet (second), and ColorBrewer (third) if needed -->
+	<!doctype html>
+	<html lang="en">
+	  <head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Bootstrap demo</title>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+	  </head>
+	  <body>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+	  </body>
+	</html>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+ crossorigin=""></script>
+
+	 
+    <!-- TO DO: Import GeoJSON file, converted to JS file with variable declaration -->
+	 <script src="salmon.js"></script>
+	<!-- -->
+    <style>
+		/* TO DO: Write custom CSS for map and legend as needed */
+		#map {
+			height: 900px;
+		}
+		#map path:hover {
+			stroke: yellow;
+			fill: yellow;
+		}
+		#legend {
+			background-color: #ffffff;
+			border: 2px solid rgba(0,0,0,0.2);
+			border-radius: 4px;
+			padding: 5x;
+		}
+		#legend-title {
+			font-weight: bold;
+			border-bottom: 1px solid rgba(0,0,0,0.2);
+			margin-bottom: 5px;
+			padding-bottom: 5px;
+		}
+		.legend-row {
+			display: table;
+		}
+		.legend-color {
+			display: table-cell;
+			width: 30px;
+			height: 30px;
+		}
+		.legend-caption {
+			display: table-cell;
+			padding-left: 5px;
+			vertical-align: middle;
+		}
+	</style>
+</head>
+<body>
+	<!-- TO DO: Create single-column Bootstrap layout with two rows: one for the map's header (title and subtitle) and another containing the map itself -->
+	<div class="container">
+		<div class="row">
+			<div class="col">
+				<h3>Interactive Salmon Recovery Portal</h3>
+				<h6>Data provided via the Salmon Recovery Portal published by the U.S. Fish and Wildlife Service for Washington. This map details the location and nature of salmon recovery efforts throughout the state of Washington. Size of project site's marker indicates the relative funding amount for the project.</h6>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<div id="map"></div>
+			</div>
+		</div>
+	 </div>
+
+    <!-- TO DO: Outside the container, create the structure of the legend -->
+	 <div id="legend">
+		<div id="legend-title">Site Status:</div>
+			<div class="legend-row">
+				<div class="legend-color" style="background-color: #CE1719"></div>
+				<div class="legend-caption">Incomplete</div>
+			</div>
+			<div class="legend-row">
+				<div class="legend-color" style="background-color: #adff2f "></div>
+				<div class="legend-caption">Complete</div>
+			</div>
+	 </div>
+</body>
+</html>
+<script type="text/javascript">
+
+// TO DO: Write utility function to return fill color for symbols
+function symbolColor(status) {
+	if (status == 'COMPLETED') return '#adff2f';
+	else return '#CE1719'
+}
+
+// TO DO: Write utility function to return radius (in pixels) for symbols
+function symbolRadius(cost) {
+	if (cost >= 350000000) return 30;
+	else if (cost >= 50000000) return 15;
+	else if (cost >= 1000000) return 10;
+	else if (cost >= 500000) return 5;
+	else return 2;
+}
+
+// TO DO: Initialize the map with an appropriate center and zoom level
+let map = L.map('map').setView([47.44411234828394, -120.41830681339496], 7);
+// TO DO: Add a visually appealing and unobtrusive basemap
+let basemap = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', {
+	maxZoom: 20,
+	attribution: 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+}).addTo(map);
+
+// TO DO: Add GeoJSON data layer, using pointToLayer to create each feature as a circleMarker with a specified radius, fill color, and stroke color.  Bind a tooltip showing variable values to each feature as well, within the pointToLayer function.
+let dataLayer = L.geoJson(salmon, {
+	pointToLayer: function(feature,latlng) {
+		return L.circleMarker(latlng, {
+			radius: symbolRadius(feature.properties.ProjectTotalAmt),
+			fillColor: symbolColor(feature.properties.ProjectStatus),
+			color: symbolColor(feature.properties.ProjectStatus),
+			weight: 1
+		}).bindTooltip(`<strong>Project Name: ${feature.properties.ProjectName}</strong><hr/>Project Description: ${feature.properties.ProjectDescription}`);
+	}
+}).addTo(map);
+
+// TO DO: Create new Leaflet control and using the onAdd function, take the contents of the legend in the DOM and assign it to the new Leaflet control
+let legend = L.control({position: 'bottomleft'});
+legend.onAdd = function(m) {
+	return document.getElementById('legend');
+}
+legend.addTo(map);
+</script>
